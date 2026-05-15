@@ -12,7 +12,7 @@ import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
-import net.runelite.api.widgets.WidgetID;
+import net.runelite.api.widgets.ComponentID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import java.util.HashMap;
@@ -22,6 +22,7 @@ public class SkillResourceListener
 {
     private static final int COINS_ID = 995;
     private static final int PLATINUM_TOKEN_ID = 13204;
+    private static final int BANK_GROUP_ID = 12;
 
     @Inject
     private Client client;
@@ -40,7 +41,7 @@ public class SkillResourceListener
     @Subscribe
     public void onWidgetLoaded(WidgetLoaded event)
     {
-        if (event.getGroupId() == WidgetID.BANK_GROUP_ID)
+        if (event.getGroupId() == BANK_GROUP_ID)
         {
             bankOpen = true;
         }
@@ -49,11 +50,9 @@ public class SkillResourceListener
     @Subscribe
     public void onWidgetClosed(WidgetClosed event)
     {
-        if (event.getGroupId() == WidgetID.BANK_GROUP_ID)
+        if (event.getGroupId() == BANK_GROUP_ID)
         {
             bankOpen = false;
-            // Reset previous inventory when bank closes
-            // so we don't track the net difference from banking
             ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
             if (inventory != null)
             {
@@ -85,14 +84,12 @@ public class SkillResourceListener
             return;
         }
 
-        // Get the actual quantity in inventory for this item
         ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
         if (inventory == null)
         {
             return;
         }
 
-        // Find the specific slot being dropped to get exact quantity
         int slotIndex = event.getParam0();
         Item[] items = inventory.getItems();
         if (slotIndex >= 0 && slotIndex < items.length)
@@ -137,7 +134,6 @@ public class SkillResourceListener
             return;
         }
 
-        // Skip tracking while bank is open
         if (bankOpen)
         {
             previousInventory = currentInventory;
@@ -162,7 +158,6 @@ public class SkillResourceListener
 
             int gained = currentQty - previousQty;
 
-            // Subtract dropped quantities
             int dropped = droppedItems.getOrDefault(itemId, 0);
             if (dropped > 0)
             {
